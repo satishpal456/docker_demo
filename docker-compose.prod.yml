@@ -3,10 +3,6 @@ version: '3'
 services:
   web:
     build: .
-    # command: sh -c "python manage.py makemigrations &&
-    #                python manage.py migrate &&
-    #                python manage.py collectstatic &&
-    #                gunicorn docker_2.wsgi:application --bind 0.0.0.0:8000"
     command: gunicorn docker_2.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/docker_2
@@ -16,25 +12,18 @@ services:
       - "8001:8000"
     depends_on:
       - postgres
-      - celery
-  
-  manage:
-    build: .
-    command: python manage.py collectstatic --noinput
-    volumes:
-      - .:/app
-      - static_volume:/docker_2/staticfiles
-      - media_volume:/docker_2/mediafiles
-    depends_on:
-      - web
+      - redis
 
   celery:
     build: .
+    restart: always
     command: celery -A docker_2.celery worker --loglevel=INFO
     volumes:
       - .:/docker_2
     depends_on:
-      - redis 
+      - redis
+      - postgres
+      - web
 
   postgres:
     image: postgres
@@ -59,25 +48,19 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin@123
   
   redis:
-    image: redis:latest
+    image: redis:7
   
   # Nginx server
   nginx:
- 
-   # Build context
     build: ./nginx
-    
-    # Mapping machine and container ports
+    restart: always
     ports:
-      - 1337:80
-      
-    # Storage volumes
+      - 8080:80
     volumes:
-      - static_volume:/docker_2/staticfiles
-      - media_volume:/docker_2/mediafiles
+      - static_volume:/code/staticfiles
+      - media_volume:/code/mediafiles
     depends_on:
       - web
-    restart: "on-failure"
 
 volumes:
   postgres_data:

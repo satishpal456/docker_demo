@@ -6,7 +6,8 @@ RUN pip install --upgrade pip
 COPY req.txt req.txt
 
 RUN pip install -r req.txt
-
+# Installing dependencies
+RUN pip install gunicorn
 COPY . .
 
 
@@ -14,4 +15,4 @@ COPY . .
 # Run the Celery worker
 # CMD 
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
